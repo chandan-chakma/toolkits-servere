@@ -21,7 +21,7 @@ function verifyJWT(req, res, next) {
     const authHeader = req.headers.authorization;
     console.log(authHeader)
     if (!authHeader) {
-        return res.status(401).send({ message: "forbidden access" })
+        return res.status(401).send({ message: "Unauthorize access" })
     }
     const token = authHeader.split(' ')[1];
     jwt.verify(token, process.env.ACCESS_TOKEN, function (err, decoded) {
@@ -29,8 +29,8 @@ function verifyJWT(req, res, next) {
             return res.status(403).send({ message: 'forbidden access' })
         }
         req.decoded = decoded;
-        next;
-        console.log(decoded) // bar
+        next();
+        // console.log(decoded) // bar
     });
 
 
@@ -40,6 +40,7 @@ async function run() {
         await client.connect();
         const toolCollection = client.db("toolkits").collection("tools")
         const userCollection = client.db("toolkits").collection("users")
+        const orderCollection = client.db("toolkits").collection("orders")
 
         app.get('/tool', async (req, res) => {
             const query = {};
@@ -75,10 +76,18 @@ async function run() {
 
         })
 
-        app.get('/user', verifyJWT, async (req, res) => {
+        app.get('/user', async (req, res) => {
             const users = await userCollection.find().toArray();
-            res.send(users)
+            res.send(users);
             // console.log(users)
+
+        })
+
+        app.post('/order', async (req, res) => {
+            const order = req.body;
+            const result = await orderCollection.insertOne(order);
+            res.send(result)
+
 
         })
 
