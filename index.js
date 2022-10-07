@@ -83,10 +83,27 @@ async function run() {
 
         })
 
+
+        // order =========================
+
+        app.get('/order', async (req, res) => {
+            const customerEmail = req.query.customerEmail;
+            const query = { customerEmail: customerEmail };
+            const orders = await orderCollection.find(query).toArray();
+            res.send(orders)
+
+        })
+
         app.post('/order', async (req, res) => {
             const order = req.body;
+            const query = { orderName: order.orderName, customerEmail: order.customerEmail };
+            const exists = await orderCollection.findOne(query);
+            if (exists) {
+                return res.send({ success: false, order: exists })
+            }
             const result = await orderCollection.insertOne(order);
-            res.send(result)
+
+            res.send({ success: true, result })
 
 
         })
