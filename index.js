@@ -5,6 +5,7 @@ const port = process.env.PORT || 5000;
 const app = express();
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 var jwt = require('jsonwebtoken');
+const { removeAllListeners } = require('nodemon');
 
 
 app.use(cors());
@@ -19,7 +20,7 @@ const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology:
 
 function verifyJWT(req, res, next) {
     const authHeader = req.headers.authorization;
-    console.log(authHeader)
+    // console.log(authHeader)
     if (!authHeader) {
         return res.status(401).send({ message: "Unauthorize access" })
     }
@@ -61,15 +62,29 @@ async function run() {
             const query = {};
             const cursor = toolCollection.find(query);
             const tools = await cursor.toArray();
-            res.send(tools)
-
+            res.send(tools);
         })
+
         app.get('/tool/:id', async (req, res) => {
             const id = req.params.id;
             const query = { _id: ObjectId(id) }
             const result = await toolCollection.findOne(query);
             res.send(result)
         })
+
+        // add tool product============================================
+        app.post('/tool', async (req, res) => {
+            const newProduct = req.body;
+            const result = await toolCollection.insertOne(newProduct);
+            res.send(result);
+        })
+        app.delete('/tool/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) };
+            const result = await toolCollection.deleteOne(query);
+            res.send(result);
+        })
+
 
 
 
@@ -85,7 +100,7 @@ async function run() {
             };
 
             const result = await userCollection.updateOne(filter, updateDoc, options);
-            const token = jwt.sign({ email: email }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' })
+            const token = jwt.sign({ email: email }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' });
 
             res.send({ result, token });
 
@@ -136,6 +151,17 @@ async function run() {
 
 
         // order =========================
+
+        //  get all order 
+        // app.get('/orders', async (req, res) => {
+        //     const query = {};
+        //     const cursor = orderCollection.find(query);
+
+        //     const orders = await cursor.toArray();
+        //     res.send(orders);
+        // })
+
+        // get per email order 
 
         app.get('/order', verifyJWT, async (req, res) => {
             const customerEmail = req.query.customerEmail;
