@@ -98,13 +98,24 @@ async function run() {
             const updateDoc = {
                 $set: user,
             };
-
             const result = await userCollection.updateOne(filter, updateDoc, options);
             const token = jwt.sign({ email: email }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' });
 
             res.send({ result, token });
 
         })
+        // put phone number and address ========
+        app.put('/user/:email', async (req, res) => {
+            const email = req.params.email;
+            const filter = { email: email };
+            const updateDoc = {
+                $set: { user }
+            }
+            const result = await userCollection.updateOne(filter, updateDoc);
+            res.send(result);
+
+        })
+
 
         app.get('/user', verifyJWT, async (req, res) => {
             const users = await userCollection.find().toArray();
@@ -112,6 +123,16 @@ async function run() {
             // console.log(users)
 
         })
+
+
+        app.get('/user/:email', async (req, res) => {
+            const email = req.params.email;
+            const user = await userCollection.findOne({ email: email });
+            res.send(user);
+
+
+        })
+
 
         app.delete('/user/:email', async (req, res) => {
             const email = req.params.email;
@@ -123,6 +144,7 @@ async function run() {
 
 
 
+
         // admin user ===============================
 
 
@@ -130,6 +152,7 @@ async function run() {
             const email = req.params.email;
             const user = await userCollection.findOne({ email: email });
             const isAdmin = user.role === 'admin';
+            // console.log(isAdmin)
             res.send({ admin: isAdmin });
 
         })
@@ -153,13 +176,13 @@ async function run() {
         // order =========================
 
         //  get all order 
-        // app.get('/orders', async (req, res) => {
-        //     const query = {};
-        //     const cursor = orderCollection.find(query);
+        app.get('/orders', verifyJWT, async (req, res) => {
+            const query = {};
+            const cursor = orderCollection.find(query);
 
-        //     const orders = await cursor.toArray();
-        //     res.send(orders);
-        // })
+            const orders = await cursor.toArray();
+            res.send(orders);
+        })
 
         // get per email order 
 
@@ -168,6 +191,12 @@ async function run() {
             const query = { customerEmail: customerEmail };
             const orders = await orderCollection.find(query).toArray();
             res.send(orders)
+        })
+        app.delete('/order/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) };
+            const result = await orderCollection.deleteOne(query);
+            res.send(result);
         })
 
         app.post('/order', async (req, res) => {
@@ -183,6 +212,8 @@ async function run() {
 
 
         })
+
+
 
         // app.post('/user/profile', async)
 
